@@ -1,0 +1,61 @@
+repositories:
+  - name: elastic
+    url: https://helm.elastic.co
+
+helmDefaults:
+  wait: true
+  timeout: 1200
+  historyMax: 10
+  cleanupOnFail: true # cleans up any new resources created during a failed release
+  createNamespace: false
+
+templates:
+  base: &base
+    labels:
+      team_name: run-team
+    namespace: infra
+    missingFileHandler: Error
+
+environments:
+  staging:
+    values:
+      - helm/values/global.yaml
+      - helm/values/staging/values.yaml
+    secrets:
+      - helm/values/staging/secrets.yaml
+  production:
+    values:
+      - helm/values/global.yaml
+      - helm/values/production/values.yaml
+    secrets:
+      - helm/values/production/secrets.yaml
+
+releases:
+  - name: elasticsearch
+    version: 7.17.3
+    chart: elastic/elasticsearch
+    <<: *base
+    values:
+    - helm/releases/{{`{{ .Release.Name }}`}}/values.yaml.gotmpl
+
+  - name: filebeat
+    version: 7.17.3
+    chart: elastic/fileabeat
+    <<: *base
+    values:
+    - helm/releases/{{`{{ .Release.Name }}`}}/values.yaml.gotmpl
+
+  - name: kibana
+    version: 7.17.3
+    chart: elastic/kibana
+    <<: *base
+    values:
+    - helm/releases/{{`{{ .Release.Name }}`}}/values.yaml.gotmpl
+
+  - name: logstash
+    version: 7.17.3
+    chart: elastic/logstash
+    <<: *base
+    values:
+    - helm/releases/{{`{{ .Release.Name }}`}}/values.yaml.gotmpl
+
